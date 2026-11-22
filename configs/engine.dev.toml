@@ -1,0 +1,8 @@
+# Development config: mainnet public market data, no keys, nothing traded.
+symbols = ["BTC/USDT", "ETH/USDT", "SOL/USDT"]
+tape_dir = "tapes"
+
+[timeouts]
+http_connect_ms = 3000
+http_total_ms = 10000
+ws_connect_ms = 5000

@@ -1,0 +1,20 @@
+[package]
+name = "exchange-okx"
+description = "OKX spot public market data: depth parser, session policy and instrument metadata."
+edition.workspace = true
+version.workspace = true
+publish.workspace = true
+
+[dependencies]
+domain.workspace = true
+exchange-core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+exchange-core = { workspace = true, features = ["testkit"] }
+proptest.workspace = true
+tokio.workspace = true
+
+[lints]
+workspace = true

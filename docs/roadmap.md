@@ -159,6 +159,8 @@ These are from memory, so the official docs win.
   - Testnet: `testnet.binance.vision`.
 - **OKX:**
   - Books: `books` channel (snapshot + `update`, `seqId`/`prevSeqId`), with a CRC32 checksum over the top 25 interleaved levels.
+  - **Verified 2026-11-22 (spec 0002 live run):** every `books` frame, snapshots included, had `"checksum":0` (3 snapshots and 305 updates). The checksum looks retired. Spec 0003 must check the current docs, and if it is gone, detect desyncs with `seqId`/`prevSeqId` and periodic snapshot audits instead of CRC32.
+  - **Verified 2026-11-22:** port 8443 sends notice `64010`, "will be retired soon, please migrate to port 443". The default WS URL is `wss://ws.okx.com/ws/v5/public`.
   - Metadata: `GET /api/v5/public/instruments` (`tickSz`, `lotSz`, `minSz`). Fees: `GET /api/v5/account/trade-fee`.
   - `clOrdId` is alphanumeric, at most 32 characters.
   - Demo trading uses `wspap` hosts and the `x-simulated-trading: 1` header.

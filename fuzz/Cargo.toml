@@ -1,0 +1,30 @@
+[package]
+name = "fuzz"
+description = "cargo-fuzz targets for the venue parsers (spec 0002 AC-7). Nightly: `cargo +nightly fuzz run binance_parse`."
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+domain = { path = "../crates/domain" }
+exchange-binance = { path = "../crates/exchange-binance" }
+exchange-core = { path = "../crates/exchange-core" }
+exchange-okx = { path = "../crates/exchange-okx" }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "binance_parse"
+path = "fuzz_targets/binance_parse.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "okx_parse"
+path = "fuzz_targets/okx_parse.rs"
+test = false
+doc = false
+bench = false
