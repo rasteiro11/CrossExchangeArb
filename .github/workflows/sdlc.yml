@@ -1,0 +1,70 @@
+# SDLC gates in CI: the same check.sh as local, the harness self-test, and the AI review gate on PRs.
+# Needs the ANTHROPIC_API_KEY repository secret for the review job.
+name: sdlc
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  # Pin a tag once you publish the harness, e.g. v0.1.0.
+  SDLC: github.com/yourorg/sdlc-harness/cmd/sdlc@latest
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Every toolchain the harness supports: tests/harness/run.sh exercises all of them.
+      # rustup honors a rust-toolchain.toml. Go does not downgrade: once apps/control-api/go.mod
+      # exists, switch to `go-version-file: apps/control-api/go.mod` so CI runs the pinned Go.
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: astral-sh/setup-uv@v6
+      - name: Install optional linters
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          command -v shellcheck || sudo apt-get install -y shellcheck
+      - name: Gate
+        run: .claude/check.sh
+      - name: Harness self-test
+        run: tests/harness/run.sh
+
+  review:
+    # Fork PRs get no secrets, so skip them instead of failing.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    needs: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The review tool is a Go program whatever languages the repo uses.
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: AI review gate
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.base_ref }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          status=0
+          git diff "origin/$BASE_REF...HEAD" | go run "$SDLC" run -gate sdlc-review > review.md || status=$?
+          if [ -s review.md ]; then
+            gh pr comment "$PR" --edit-last --body-file review.md || gh pr comment "$PR" --body-file review.md
+          fi
+          exit "$status"
